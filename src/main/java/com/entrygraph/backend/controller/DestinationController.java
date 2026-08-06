@@ -2,11 +2,10 @@ package com.entrygraph.backend.controller;
 
 import java.util.List;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.entrygraph.backend.entity.Destination;
+import com.entrygraph.backend.dto.request.CreateDestinationRequest;
+import com.entrygraph.backend.dto.response.DestinationResponse;
 import com.entrygraph.backend.service.DestinationService;
 
 @RestController
@@ -20,7 +19,14 @@ public class DestinationController {
     }
 
     @GetMapping
-    public List<Destination> getAllDestinations() {
+    public List<DestinationResponse> getAllDestinations() {
         return destinationService.getAllDestinations();
+    }
+
+    @PostMapping
+    public DestinationResponse createDestination(
+            @RequestBody CreateDestinationRequest request) {
+
+        return destinationService.createDestination(request);
     }
 }
