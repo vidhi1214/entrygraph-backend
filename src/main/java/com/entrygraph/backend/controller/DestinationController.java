@@ -2,7 +2,13 @@ package com.entrygraph.backend.controller;
 
 import java.util.List;
 
-import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.entrygraph.backend.dto.request.CreateDestinationRequest;
 import com.entrygraph.backend.dto.response.DestinationResponse;
@@ -25,7 +31,7 @@ public class DestinationController {
 
     @PostMapping
     public DestinationResponse createDestination(
-            @RequestBody CreateDestinationRequest request) {
+            @Valid @RequestBody CreateDestinationRequest request) {
 
         return destinationService.createDestination(request);
     }
