@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.entrygraph.backend.dto.request.CreateDestinationRequest;
 import com.entrygraph.backend.dto.response.DestinationResponse;
+import com.entrygraph.backend.enums.DestinationCategory;
 import com.entrygraph.backend.service.DestinationService;
 
 @RestController
@@ -21,7 +22,13 @@ public class DestinationController {
     }
 
     @GetMapping
-    public List<DestinationResponse> getAllDestinations() {
+    public List<DestinationResponse> getDestinations(
+            @RequestParam(required = false) DestinationCategory category) {
+
+        if (category != null) {
+            return destinationService.getDestinationsByCategory(category);
+        }
+
         return destinationService.getAllDestinations();
     }
 

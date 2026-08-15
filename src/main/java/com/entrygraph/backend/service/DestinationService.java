@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.entrygraph.backend.dto.request.CreateDestinationRequest;
 import com.entrygraph.backend.dto.response.DestinationResponse;
 import com.entrygraph.backend.entity.Destination;
+import com.entrygraph.backend.enums.DestinationCategory;
 import com.entrygraph.backend.enums.DestinationStatus;
 import com.entrygraph.backend.exception.DestinationNotFoundException;
 import com.entrygraph.backend.repository.DestinationRepository;
@@ -30,16 +31,27 @@ public class DestinationService {
                 .collect(Collectors.toList());
     }
 
+    public List<DestinationResponse> getDestinationsByCategory(
+            DestinationCategory category) {
+
+        return destinationRepository.findByCategory(category)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
     public DestinationResponse getDestinationById(UUID id) {
 
         Destination destination = destinationRepository.findById(id)
                 .orElseThrow(() ->
-                        new DestinationNotFoundException("Destination not found with id: " + id));
+                        new DestinationNotFoundException(
+                                "Destination not found with id: " + id));
 
         return toResponse(destination);
     }
 
-    public DestinationResponse createDestination(CreateDestinationRequest request) {
+    public DestinationResponse createDestination(
+            CreateDestinationRequest request) {
 
         Destination destination = new Destination();
 
@@ -49,7 +61,6 @@ public class DestinationService {
         destination.setLongitude(request.getLongitude());
         destination.setCategory(request.getCategory());
         destination.setDescription(request.getDescription());
-
         destination.setStatus(DestinationStatus.ACTIVE);
 
         Destination saved = destinationRepository.save(destination);
@@ -57,11 +68,14 @@ public class DestinationService {
         return toResponse(saved);
     }
 
-    public DestinationResponse updateDestination(UUID id, CreateDestinationRequest request) {
+    public DestinationResponse updateDestination(
+            UUID id,
+            CreateDestinationRequest request) {
 
         Destination destination = destinationRepository.findById(id)
                 .orElseThrow(() ->
-                        new DestinationNotFoundException("Destination not found with id: " + id));
+                        new DestinationNotFoundException(
+                                "Destination not found with id: " + id));
 
         destination.setName(request.getName());
         destination.setAddress(request.getAddress());
@@ -79,7 +93,8 @@ public class DestinationService {
 
         Destination destination = destinationRepository.findById(id)
                 .orElseThrow(() ->
-                        new DestinationNotFoundException("Destination not found with id: " + id));
+                        new DestinationNotFoundException(
+                                "Destination not found with id: " + id));
 
         destinationRepository.delete(destination);
     }
