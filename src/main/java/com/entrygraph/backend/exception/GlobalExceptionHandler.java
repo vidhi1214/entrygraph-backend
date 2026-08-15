@@ -30,4 +30,16 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(response);
     }
+
+    @ExceptionHandler(DestinationNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleDestinationNotFound(
+            DestinationNotFoundException ex) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("status", HttpStatus.NOT_FOUND.value());
+        response.put("message", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
 }
