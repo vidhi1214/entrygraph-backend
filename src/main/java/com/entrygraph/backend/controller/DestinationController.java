@@ -23,10 +23,19 @@ public class DestinationController {
 
     @GetMapping
     public List<DestinationResponse> getDestinations(
-            @RequestParam(required = false) DestinationCategory category) {
+            @RequestParam(required = false) DestinationCategory category,
+            @RequestParam(required = false) String search) {
+
+        if (search != null && !search.isBlank() && category != null) {
+            return destinationService.searchDestinations(search, category);
+        }
 
         if (category != null) {
             return destinationService.getDestinationsByCategory(category);
+        }
+
+        if (search != null && !search.isBlank()) {
+            return destinationService.searchDestinations(search);
         }
 
         return destinationService.getAllDestinations();

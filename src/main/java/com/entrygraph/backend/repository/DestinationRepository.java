@@ -11,4 +11,10 @@ import com.entrygraph.backend.enums.DestinationCategory;
 public interface DestinationRepository extends JpaRepository<Destination, UUID> {
 
     List<Destination> findByCategory(DestinationCategory category);
+
+    List<Destination> findByNameContainingIgnoreCase(String name);
+
+    List<Destination> findByNameContainingIgnoreCaseAndCategory(
+            String name,
+            DestinationCategory category);
 }

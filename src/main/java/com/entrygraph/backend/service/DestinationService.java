@@ -40,6 +40,25 @@ public class DestinationService {
                 .collect(Collectors.toList());
     }
 
+    public List<DestinationResponse> searchDestinations(String search) {
+
+        return destinationRepository.findByNameContainingIgnoreCase(search)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<DestinationResponse> searchDestinations(
+            String search,
+            DestinationCategory category) {
+
+        return destinationRepository
+                .findByNameContainingIgnoreCaseAndCategory(search, category)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
     public DestinationResponse getDestinationById(UUID id) {
 
         Destination destination = destinationRepository.findById(id)
