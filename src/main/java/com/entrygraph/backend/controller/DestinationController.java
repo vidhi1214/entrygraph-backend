@@ -1,11 +1,13 @@
 package com.entrygraph.backend.controller;
 
-import java.util.List;
+import java.net.URI;
 import java.util.UUID;
 
 import jakarta.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.entrygraph.backend.dto.request.CreateDestinationRequest;
@@ -53,10 +55,18 @@ public class DestinationController {
     }
 
     @PostMapping
-    public DestinationResponse createDestination(
+    public ResponseEntity<DestinationResponse> createDestination(
             @Valid @RequestBody CreateDestinationRequest request) {
 
-        return destinationService.createDestination(request);
+        DestinationResponse created =
+                destinationService.createDestination(request);
+
+        URI location = URI.create(
+                "/api/v1/destinations/" + created.getId());
+
+        return ResponseEntity
+                .created(location)
+                .body(created);
     }
 
     @PutMapping("/{id}")
@@ -68,7 +78,11 @@ public class DestinationController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteDestination(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteDestination(
+            @PathVariable UUID id) {
+
         destinationService.deleteDestination(id);
+
+        return ResponseEntity.noContent().build();
     }
 }

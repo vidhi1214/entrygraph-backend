@@ -21,7 +21,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public abstract class BaseEntity {
 
     @Id
-    private UUID id;
+    private UUID id = UUID.randomUUID();
 
     @CreatedDate
     private Instant createdAt;
