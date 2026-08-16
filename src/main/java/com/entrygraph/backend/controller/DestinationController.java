@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import com.entrygraph.backend.dto.request.CreateDestinationRequest;
@@ -22,23 +24,27 @@ public class DestinationController {
     }
 
     @GetMapping
-    public List<DestinationResponse> getDestinations(
+    public Page<DestinationResponse> getDestinations(
             @RequestParam(required = false) DestinationCategory category,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+            Pageable pageable) {
 
         if (search != null && !search.isBlank() && category != null) {
-            return destinationService.searchDestinations(search, category);
+            return destinationService
+                    .searchDestinations(search, category, pageable);
         }
 
         if (category != null) {
-            return destinationService.getDestinationsByCategory(category);
+            return destinationService
+                    .getDestinationsByCategory(category, pageable);
         }
 
         if (search != null && !search.isBlank()) {
-            return destinationService.searchDestinations(search);
+            return destinationService
+                    .searchDestinations(search, pageable);
         }
 
-        return destinationService.getAllDestinations();
+        return destinationService.getDestinations(pageable);
     }
 
     @GetMapping("/{id}")

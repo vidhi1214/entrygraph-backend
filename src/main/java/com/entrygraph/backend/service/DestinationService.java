@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.entrygraph.backend.dto.request.CreateDestinationRequest;
@@ -31,6 +33,13 @@ public class DestinationService {
                 .collect(Collectors.toList());
     }
 
+    public Page<DestinationResponse> getDestinations(
+            Pageable pageable) {
+
+        return destinationRepository.findAll(pageable)
+                .map(this::toResponse);
+    }
+
     public List<DestinationResponse> getDestinationsByCategory(
             DestinationCategory category) {
 
@@ -40,12 +49,30 @@ public class DestinationService {
                 .collect(Collectors.toList());
     }
 
+    public Page<DestinationResponse> getDestinationsByCategory(
+            DestinationCategory category,
+            Pageable pageable) {
+
+        return destinationRepository
+                .findByCategory(category, pageable)
+                .map(this::toResponse);
+    }
+
     public List<DestinationResponse> searchDestinations(String search) {
 
         return destinationRepository.findByNameContainingIgnoreCase(search)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    public Page<DestinationResponse> searchDestinations(
+            String search,
+            Pageable pageable) {
+
+        return destinationRepository
+                .findByNameContainingIgnoreCase(search, pageable)
+                .map(this::toResponse);
     }
 
     public List<DestinationResponse> searchDestinations(
@@ -57,6 +84,19 @@ public class DestinationService {
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    public Page<DestinationResponse> searchDestinations(
+            String search,
+            DestinationCategory category,
+            Pageable pageable) {
+
+        return destinationRepository
+                .findByNameContainingIgnoreCaseAndCategory(
+                        search,
+                        category,
+                        pageable)
+                .map(this::toResponse);
     }
 
     public DestinationResponse getDestinationById(UUID id) {
