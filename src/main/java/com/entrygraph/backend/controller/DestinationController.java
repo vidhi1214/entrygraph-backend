@@ -1,17 +1,18 @@
 package com.entrygraph.backend.controller;
 
-import java.util.List;
+import java.net.URI;
+import java.util.UUID;
 
 import jakarta.validation.Valid;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import com.entrygraph.backend.dto.request.CreateDestinationRequest;
 import com.entrygraph.backend.dto.response.DestinationResponse;
+import com.entrygraph.backend.enums.DestinationCategory;
 import com.entrygraph.backend.service.DestinationService;
 
 @RestController
@@ -25,14 +26,63 @@ public class DestinationController {
     }
 
     @GetMapping
-    public List<DestinationResponse> getAllDestinations() {
-        return destinationService.getAllDestinations();
+    public Page<DestinationResponse> getDestinations(
+            @RequestParam(required = false) DestinationCategory category,
+            @RequestParam(required = false) String search,
+            Pageable pageable) {
+
+        if (search != null && !search.isBlank() && category != null) {
+            return destinationService
+                    .searchDestinations(search, category, pageable);
+        }
+
+        if (category != null) {
+            return destinationService
+                    .getDestinationsByCategory(category, pageable);
+        }
+
+        if (search != null && !search.isBlank()) {
+            return destinationService
+                    .searchDestinations(search, pageable);
+        }
+
+        return destinationService.getDestinations(pageable);
+    }
+
+    @GetMapping("/{id}")
+    public DestinationResponse getDestinationById(@PathVariable UUID id) {
+        return destinationService.getDestinationById(id);
     }
 
     @PostMapping
-    public DestinationResponse createDestination(
+    public ResponseEntity<DestinationResponse> createDestination(
             @Valid @RequestBody CreateDestinationRequest request) {
 
-        return destinationService.createDestination(request);
+        DestinationResponse created =
+                destinationService.createDestination(request);
+
+        URI location = URI.create(
+                "/api/v1/destinations/" + created.getId());
+
+        return ResponseEntity
+                .created(location)
+                .body(created);
+    }
+
+    @PutMapping("/{id}")
+    public DestinationResponse updateDestination(
+            @PathVariable UUID id,
+            @Valid @RequestBody CreateDestinationRequest request) {
+
+        return destinationService.updateDestination(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteDestination(
+            @PathVariable UUID id) {
+
+        destinationService.deleteDestination(id);
+
+        return ResponseEntity.noContent().build();
     }
 }
