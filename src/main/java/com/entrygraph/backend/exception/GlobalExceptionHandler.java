@@ -25,7 +25,6 @@ public class GlobalExceptionHandler {
         }
 
         Map<String, Object> response = new HashMap<>();
-
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("message", "Validation failed");
         response.put("errors", errors);
@@ -39,30 +38,48 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleDestinationNotFound(
             DestinationNotFoundException ex) {
 
-        Map<String, Object> response = new HashMap<>();
+        return errorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage());
+    }
 
-        response.put("status", HttpStatus.NOT_FOUND.value());
-        response.put("message", ex.getMessage());
+    @ExceptionHandler(TagNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTagNotFound(
+            TagNotFoundException ex) {
 
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(response);
+        return errorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateTagException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateTag(
+            DuplicateTagException ex) {
+
+        return errorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, Object>> handleTypeMismatch(
             MethodArgumentTypeMismatchException ex) {
 
-        Map<String, Object> response = new HashMap<>();
+        return errorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Invalid request parameter");
+    }
 
-        response.put("status", HttpStatus.BAD_REQUEST.value());
-        response.put(
-                "message",
-                "Invalid value for parameter '" + ex.getName() + "'"
-        );
+    private ResponseEntity<Map<String, Object>> errorResponse(
+            HttpStatus status,
+            String message) {
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", status.value());
+        response.put("message", message);
 
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(status)
                 .body(response);
     }
 }

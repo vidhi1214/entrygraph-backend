@@ -1,41 +1,50 @@
 package com.entrygraph.backend.service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.entrygraph.backend.dto.request.CreateDestinationRequest;
 import com.entrygraph.backend.dto.response.DestinationResponse;
+import com.entrygraph.backend.dto.response.TagResponse;
 import com.entrygraph.backend.entity.Destination;
+import com.entrygraph.backend.entity.Tag;
 import com.entrygraph.backend.enums.DestinationCategory;
 import com.entrygraph.backend.enums.DestinationStatus;
 import com.entrygraph.backend.exception.DestinationNotFoundException;
+import com.entrygraph.backend.exception.TagNotFoundException;
 import com.entrygraph.backend.repository.DestinationRepository;
+import com.entrygraph.backend.repository.TagRepository;
+import com.entrygraph.backend.specification.DestinationSpecification;
 
 @Service
 public class DestinationService {
 
     private final DestinationRepository destinationRepository;
+    private final TagRepository tagRepository;
 
-    public DestinationService(DestinationRepository destinationRepository) {
+    public DestinationService(
+            DestinationRepository destinationRepository,
+            TagRepository tagRepository) {
         this.destinationRepository = destinationRepository;
+        this.tagRepository = tagRepository;
     }
 
     public List<DestinationResponse> getAllDestinations() {
-
         return destinationRepository.findAll()
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
-    public Page<DestinationResponse> getDestinations(
-            Pageable pageable) {
-
+    public Page<DestinationResponse> getDestinations(Pageable pageable) {
         return destinationRepository.findAll(pageable)
                 .map(this::toResponse);
     }
@@ -59,8 +68,11 @@ public class DestinationService {
     }
 
     public List<DestinationResponse> searchDestinations(String search) {
-
-        return destinationRepository.findByNameContainingIgnoreCase(search)
+        return destinationRepository
+                .findByNameContainingIgnoreCaseOrAddressContainingIgnoreCase(
+                        search,
+                        search,
+                        Pageable.unpaged())
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -71,7 +83,10 @@ public class DestinationService {
             Pageable pageable) {
 
         return destinationRepository
-                .findByNameContainingIgnoreCase(search, pageable)
+                .findByNameContainingIgnoreCaseOrAddressContainingIgnoreCase(
+                        search,
+                        search,
+                        pageable)
                 .map(this::toResponse);
     }
 
@@ -80,7 +95,12 @@ public class DestinationService {
             DestinationCategory category) {
 
         return destinationRepository
-                .findByNameContainingIgnoreCaseAndCategory(search, category)
+                .findByNameContainingIgnoreCaseAndCategoryOrAddressContainingIgnoreCaseAndCategory(
+                        search,
+                        category,
+                        search,
+                        category,
+                        Pageable.unpaged())
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -92,15 +112,41 @@ public class DestinationService {
             Pageable pageable) {
 
         return destinationRepository
-                .findByNameContainingIgnoreCaseAndCategory(
+                .findByNameContainingIgnoreCaseAndCategoryOrAddressContainingIgnoreCaseAndCategory(
+                        search,
+                        category,
                         search,
                         category,
                         pageable)
                 .map(this::toResponse);
     }
 
-    public DestinationResponse getDestinationById(UUID id) {
+    public Page<DestinationResponse> getDestinationsByTag(
+            UUID tagId,
+            Pageable pageable) {
 
+        return destinationRepository
+                .findByTags_Id(tagId, pageable)
+                .map(this::toResponse);
+    }
+
+    public Page<DestinationResponse> filterDestinations(
+            String search,
+            DestinationCategory category,
+            DestinationStatus status,
+            UUID tagId,
+            Pageable pageable) {
+
+        return destinationRepository.findAll(
+                DestinationSpecification.search(search)
+                        .and(DestinationSpecification.hasCategory(category))
+                        .and(DestinationSpecification.hasStatus(status))
+                        .and(DestinationSpecification.hasTag(tagId)),
+                pageable
+        ).map(this::toResponse);
+    }
+
+    public DestinationResponse getDestinationById(UUID id) {
         Destination destination = destinationRepository.findById(id)
                 .orElseThrow(() ->
                         new DestinationNotFoundException(
@@ -109,6 +155,7 @@ public class DestinationService {
         return toResponse(destination);
     }
 
+    @Transactional
     public DestinationResponse createDestination(
             CreateDestinationRequest request) {
 
@@ -121,12 +168,14 @@ public class DestinationService {
         destination.setCategory(request.getCategory());
         destination.setDescription(request.getDescription());
         destination.setStatus(DestinationStatus.ACTIVE);
+        destination.setTags(resolveTags(request.getTagIds()));
 
         Destination saved = destinationRepository.save(destination);
 
         return toResponse(saved);
     }
 
+    @Transactional
     public DestinationResponse updateDestination(
             UUID id,
             CreateDestinationRequest request) {
@@ -142,20 +191,35 @@ public class DestinationService {
         destination.setLongitude(request.getLongitude());
         destination.setCategory(request.getCategory());
         destination.setDescription(request.getDescription());
+        destination.setTags(resolveTags(request.getTagIds()));
 
         Destination updated = destinationRepository.save(destination);
 
         return toResponse(updated);
     }
 
+    @Transactional
     public void deleteDestination(UUID id) {
-
         Destination destination = destinationRepository.findById(id)
                 .orElseThrow(() ->
                         new DestinationNotFoundException(
                                 "Destination not found with id: " + id));
 
         destinationRepository.delete(destination);
+    }
+
+    private Set<Tag> resolveTags(Set<UUID> tagIds) {
+
+        if (tagIds == null || tagIds.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        return tagIds.stream()
+                .map(tagId -> tagRepository.findById(tagId)
+                        .orElseThrow(() ->
+                                new TagNotFoundException(
+                                        "Tag not found with id: " + tagId)))
+                .collect(Collectors.toSet());
     }
 
     private DestinationResponse toResponse(Destination destination) {
@@ -171,6 +235,24 @@ public class DestinationService {
         response.setDescription(destination.getDescription());
         response.setStatus(destination.getStatus());
         response.setCreatedAt(destination.getCreatedAt());
+
+        Set<TagResponse> tags = destination.getTags()
+                .stream()
+                .map(this::toTagResponse)
+                .collect(Collectors.toSet());
+
+        response.setTags(tags);
+
+        return response;
+    }
+
+    private TagResponse toTagResponse(Tag tag) {
+
+        TagResponse response = new TagResponse();
+
+        response.setId(tag.getId());
+        response.setName(tag.getName());
+        response.setCreatedAt(tag.getCreatedAt());
 
         return response;
     }
