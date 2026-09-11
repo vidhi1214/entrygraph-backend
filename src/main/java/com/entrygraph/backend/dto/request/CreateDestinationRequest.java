@@ -1,5 +1,8 @@
 package com.entrygraph.backend.dto.request;
 
+import java.util.Set;
+import java.util.UUID;
+
 import com.entrygraph.backend.enums.DestinationCategory;
 
 import jakarta.validation.constraints.NotBlank;
@@ -31,4 +34,6 @@ public class CreateDestinationRequest {
 
     @Size(max = 500, message = "Description cannot exceed 500 characters")
     private String description;
+
+    private Set<UUID> tagIds;
 }

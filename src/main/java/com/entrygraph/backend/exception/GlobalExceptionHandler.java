@@ -21,11 +21,13 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
 
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            errors.put(error.getField(), error.getDefaultMessage());
+            errors.put(
+                    error.getField(),
+                    error.getDefaultMessage()
+            );
         }
 
         Map<String, Object> response = new HashMap<>();
-
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("message", "Validation failed");
         response.put("errors", errors);
@@ -40,7 +42,6 @@ public class GlobalExceptionHandler {
             DestinationNotFoundException ex) {
 
         Map<String, Object> response = new HashMap<>();
-
         response.put("status", HttpStatus.NOT_FOUND.value());
         response.put("message", ex.getMessage());
 
@@ -49,17 +50,39 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    @ExceptionHandler(TagNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTagNotFound(
+            TagNotFoundException ex) {
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", HttpStatus.NOT_FOUND.value());
+        response.put("message", ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
+    @ExceptionHandler(DuplicateTagException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateTag(
+            DuplicateTagException ex) {
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("message", ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, Object>> handleTypeMismatch(
             MethodArgumentTypeMismatchException ex) {
 
         Map<String, Object> response = new HashMap<>();
-
         response.put("status", HttpStatus.BAD_REQUEST.value());
-        response.put(
-                "message",
-                "Invalid value for parameter '" + ex.getName() + "'"
-        );
+        response.put("message", "Invalid request parameter");
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
